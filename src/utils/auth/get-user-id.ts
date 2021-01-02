@@ -18,4 +18,5 @@ export const getUserId = (request: Context["request"]): number | undefined => {
 
     return decoded.userId;
   }
+  throw new Error("Authentication Required");
 };

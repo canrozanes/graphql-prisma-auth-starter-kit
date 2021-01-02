@@ -1,7 +1,5 @@
 import { Prisma, User } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { createGzip } from "zlib";
-import { emailService } from "../../utils/email-service";
 import { login } from "../User/operations";
 import { TestContext } from "./create-test-context";
 

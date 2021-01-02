@@ -1,5 +1,5 @@
-import { db } from "./db";
 import { PrismaClient } from "@prisma/client";
+import { db } from "./db";
 
 export interface Context {
   db: PrismaClient;
@@ -16,9 +16,7 @@ export interface Context {
     };
   };
 }
-export const context = (request: Context["request"]) => {
-  return {
-    request,
-    db,
-  };
-};
+export const context = (request: Context["request"]) => ({
+  request,
+  db,
+});

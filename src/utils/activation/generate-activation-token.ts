@@ -6,8 +6,7 @@ export const generateActivationToken = (
   name: string,
   email: string,
   password: string
-) => {
-  return jwt.sign({ name, email, password }, JWT_ACTIVATION_SECRET, {
+) =>
+  jwt.sign({ name, email, password }, JWT_ACTIVATION_SECRET, {
     expiresIn: "10m",
   });
-};

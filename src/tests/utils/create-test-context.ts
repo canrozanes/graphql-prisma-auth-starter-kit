@@ -14,15 +14,15 @@ export type TestContext = {
   db: PrismaClient;
 };
 export function createTestContext(): TestContext {
-  let ctx = {} as TestContext;
+  const ctx = {} as TestContext;
   const graphqlCtx = graphqlTestContext();
   const prismaCtx = prismaTestContext();
   beforeEach(async () => {
     const client = await graphqlCtx.before();
-    const db = await prismaCtx.before();
+    const newDb = await prismaCtx.before();
     Object.assign(ctx, {
       client,
-      db,
+      db: newDb,
     });
   });
   afterEach(async () => {

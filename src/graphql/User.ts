@@ -80,7 +80,7 @@ export const UpdateUserInput = inputObjectType({
 
 export const getAllUsers = queryField("users", {
   type: nonNull(list(nonNull("User"))),
-  resolve(_root, _args, ctx, info) {
+  resolve(_root, _args, ctx) {
     return ctx.db.user.findMany();
   },
 });
@@ -90,7 +90,7 @@ export const signUp = mutationField("signUp", {
   args: {
     data: arg({ type: nonNull(SignUpUserInput) }),
   },
-  async resolve(_root, args, ctx) {
+  async resolve(_root, args) {
     const { name, email, password } = args.data;
     const hashedPassword = await hashPassword(password);
 
@@ -187,7 +187,7 @@ export const ResetPassword = mutationField("resetPassword", {
   args: {
     data: arg({ type: nonNull(ResetPasswordInput) }),
   },
-  async resolve(_root, args, { db, request }) {
+  async resolve(_root, args, { db }) {
     verifyResetPasswordToken(args.data.token);
 
     // If token is valid, the user must exists hence the "as PrismaUserType" at the end.

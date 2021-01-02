@@ -9,7 +9,7 @@ type UserInfo = {
 } | void;
 
 export const verifyResetPasswordToken = (token: string) => {
-  const decoded = jwt.verify(token, JWT_RESET_PASSWORD_SECRET, (err, _) => {
+  const decoded = jwt.verify(token, JWT_RESET_PASSWORD_SECRET, (err) => {
     if (err) {
       throw new Error("Your reset link is invalid.");
     }
