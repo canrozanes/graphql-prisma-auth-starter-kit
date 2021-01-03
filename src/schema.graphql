@@ -19,17 +19,22 @@ type MessagePayload {
 }
 
 type Mutation {
-  activateUser(token: String!): MessagePayload
+  confirmEmail(token: String!): MessagePayload
   forgotPassword(email: String!): MessagePayload
   login(data: LoginUserInput!): AuthPayload
+  resendActivationEmail(data: ResendEmailConfirmationInput!): MessagePayload
   resetPassword(data: ResetPasswordInput!): MessagePayload
   signUp(data: SignUpUserInput!): MessagePayload
-  updateUser(data: UpdateUserInput!): User
+  updateMyself(data: UpdateMyselfInput!): User
 }
 
 type Query {
   me: User
   users: [User!]!
+}
+
+input ResendEmailConfirmationInput {
+  email: String!
 }
 
 input ResetPasswordInput {
@@ -48,7 +53,7 @@ input SignUpUserInput {
   password: String!
 }
 
-input UpdateUserInput {
+input UpdateMyselfInput {
   email: String
   name: String
   password: String

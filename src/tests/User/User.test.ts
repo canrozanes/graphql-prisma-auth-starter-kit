@@ -3,12 +3,12 @@ import { emailService } from "../../utils/email-service";
 import { userOne, userTwoAdmin, seedDatabase } from "../utils/seed-database";
 import {
   signUpUser,
-  activateUser,
+  confirmEmail,
   forgotPassword,
   resetPassword,
   login,
   me,
-  updateUser,
+  updateMyself,
   getAllUsers,
 } from "./operations";
 
@@ -48,10 +48,10 @@ describe("User - Sign-up", () => {
       /Your account has been created/
     );
 
-    const activateUserRes = await ctx.client.request(activateUser, {
+    const confirmEmailRes = await ctx.client.request(confirmEmail, {
       token: emailVerificationToken,
     });
-    expect(activateUserRes.activateUser.message).toBe(
+    expect(confirmEmailRes.confirmEmail.message).toBe(
       "Activation succeeded, you can now sign-in."
     );
 
@@ -74,7 +74,7 @@ describe("User - Sign-up", () => {
     const invalidToken =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiQ2FuIiwiZW1haWwiOiJjYW5AZXhhbXBsZS5jb20iLCJwYXNzd29yZCI6IiQyYSQxMCRxTjlwU3JJczNUMFFmZ2ZySTByT2tPLldXOWNRSHZ3OWRWdUoydWdQZGtLRUg1bG12SloxcSIsImlhdCI6MTYwOTU0Nzc0OCwiZXhwIjoxNjA5NTQ4MzQ4fQ.ORl4t_Lr-5wSW-aflMLo";
     await expect(
-      ctx.client.request(activateUser, {
+      ctx.client.request(confirmEmail, {
         token: invalidToken,
       })
     ).rejects.toThrow();
@@ -192,7 +192,7 @@ describe("User - Password Reset", () => {
   });
 });
 
-describe("User - updateUser", () => {
+describe("User - updateMyself", () => {
   it("should properly update users", async () => {
     const requestHeaders = {
       authorization: `Bearer ${userOne.authToken}`,
@@ -203,13 +203,13 @@ describe("User - updateUser", () => {
       },
     };
 
-    const updateUserResponse = await ctx.client.request(
-      updateUser,
+    const updateMyselfResponse = await ctx.client.request(
+      updateMyself,
       variables,
       requestHeaders
     );
 
-    expect(updateUserResponse.updateUser.email).toBe(variables.data.email);
+    expect(updateMyselfResponse.updateMyself.email).toBe(variables.data.email);
   });
 });
 
@@ -219,25 +219,25 @@ describe("User - getAllUsers", () => {
       authorization: `Bearer ${userOne.authToken}`,
     };
 
-    const updateUserRes = await ctx.client.request(
+    const updateMyselfRes = await ctx.client.request(
       getAllUsers,
       undefined,
       requestHeaders
     );
 
-    expect(updateUserRes.users.length).toBe(0);
+    expect(updateMyselfRes.users.length).toBe(0);
   });
   it("should return all the users if user is admin", async () => {
     const requestHeaders = {
       authorization: `Bearer ${userTwoAdmin.authToken}`,
     };
 
-    const updateUserRes = await ctx.client.request(
+    const updateMyselfRes = await ctx.client.request(
       getAllUsers,
       undefined,
       requestHeaders
     );
 
-    expect(updateUserRes.users.length).toBe(2);
+    expect(updateMyselfRes.users.length).toBe(2);
   });
 });

@@ -1,4 +1,9 @@
-import { User as PrismaUserType } from "@prisma/client";
+import { Prisma, User as PrismaUserType } from "@prisma/client";
+import {
+  UserInputError,
+  AuthenticationError,
+  ForbiddenError,
+} from "apollo-server";
 import {
   objectType,
   stringArg,
@@ -10,6 +15,7 @@ import {
   mutationField,
 } from "nexus";
 import bcrypt from "bcryptjs";
+import isEmail from "validator/lib/isEmail";
 import { generateAuthToken, getUserId } from "../utils/auth";
 import hashPassword from "../utils/hash-password";
 import {
@@ -71,12 +77,19 @@ export const LoginUserInput = inputObjectType({
   },
 });
 
-export const UpdateUserInput = inputObjectType({
-  name: "UpdateUserInput",
+export const UpdateMyselfInput = inputObjectType({
+  name: "UpdateMyselfInput",
   definition(t) {
     t.string("name");
     t.string("email");
     t.string("password");
+  },
+});
+
+export const ResendEmailConfirmationInput = inputObjectType({
+  name: "ResendEmailConfirmationInput",
+  definition(t) {
+    t.nonNull.string("email");
   },
 });
 
@@ -110,10 +123,27 @@ export const signUp = mutationField("signUp", {
   },
   async resolve(_root, args, { db }) {
     const { name, email, password } = args.data;
+
+    if (!isEmail(email)) {
+      throw new UserInputError("Please enter a valid email", {
+        invalidArgs: "email",
+      });
+    }
     const hashedPassword = await hashPassword(password);
 
-    const activationToken = generateActivationToken(email);
+    const userExists = await db.user.findUnique({
+      where: {
+        email: args.data.email,
+      },
+    });
 
+    if (userExists) {
+      throw new UserInputError("Email is already taken", {
+        invalidArgs: "email",
+      });
+    }
+
+    const activationToken = generateActivationToken(email);
     const html = emailService.activationEmail(activationToken);
     await emailService.sendEmail(EMAIL_FROM, email, "Account activation", html);
 
@@ -131,14 +161,50 @@ export const signUp = mutationField("signUp", {
   },
 });
 
-export const activateUser = mutationField("activateUser", {
+export const resendActivationEmail = mutationField("resendActivationEmail", {
+  type: MessagePayload,
+  args: {
+    data: arg({ type: nonNull(ResendEmailConfirmationInput) }),
+  },
+  async resolve(_root, args, { db }) {
+    const user = await db.user.findUnique({
+      where: {
+        email: args.data.email,
+      },
+    });
+    if (!user) {
+      return {
+        message: `There are no users associated with this email: ${args.data.email}.`,
+      };
+    }
+    if (user.isEmailConfirmed) {
+      return {
+        message: `This email: ${args.data.email} is already confirmed`,
+      };
+    }
+
+    const activationToken = generateActivationToken(args.data.email);
+    const html = emailService.activationEmail(activationToken);
+    await emailService.sendEmail(
+      EMAIL_FROM,
+      args.data.email,
+      "Account activation",
+      html
+    );
+
+    return {
+      message: `We've sent an email to ${args.data.email}. Please follow the instruction on the email to confirm your account`,
+    };
+  },
+});
+
+export const confirmEmail = mutationField("confirmEmail", {
   type: MessagePayload,
   args: {
     token: nonNull(stringArg()),
   },
   async resolve(_root, args, { db }) {
     const { token } = args;
-
     const { email } = verifyActivationToken(token);
 
     await db.user.update({
@@ -247,14 +313,19 @@ export const login = mutationField("login", {
       },
     });
     if (!user) {
-      throw new Error("Email or password does not match");
+      throw new AuthenticationError("Email or password does not match");
     }
     const isPasswordMatch = await bcrypt.compare(
       args.data.password,
       user.password
     );
     if (!isPasswordMatch) {
-      throw new Error("Email or password does not match");
+      throw new AuthenticationError("Email or password does not match");
+    }
+    if (!user.isEmailConfirmed) {
+      throw new ForbiddenError(
+        "You need to confirm your email before your first login"
+      );
     }
     return {
       user,
@@ -271,22 +342,44 @@ export const getMe = queryField("me", {
   },
 });
 
-export const updateUser = mutationField("updateUser", {
+export const updateMyself = mutationField("updateMyself", {
   type: User,
   args: {
-    data: nonNull(arg({ type: UpdateUserInput })),
+    data: nonNull(arg({ type: UpdateMyselfInput })),
   },
-  resolve(_root, args, { db, request }) {
+  async resolve(_root, args, { db, request }) {
     const userId = getUserId(request);
+    const { email, password, name } = args.data;
+
+    const opsData: Prisma.UserUpdateInput = {
+      email: undefined,
+      password: undefined,
+      name: undefined,
+    };
+
+    if (email && !isEmail(email)) {
+      throw new UserInputError("Please enter a valid email", {
+        invalidArgs: "email",
+      });
+    }
+
+    if (email && isEmail(email)) {
+      opsData.email = email;
+    }
+
+    if (password) {
+      opsData.password = await hashPassword(password);
+    }
+
+    if (name) {
+      opsData.name = name;
+    }
+
     return db.user.update({
       where: {
         id: userId,
       },
-      data: {
-        email: args.data.email ?? undefined,
-        password: args.data.password ?? undefined,
-        name: args.data.name ?? undefined,
-      },
+      data: opsData,
     });
   },
 });

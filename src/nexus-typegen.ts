@@ -23,6 +23,9 @@ export interface NexusGenInputs {
     email: string; // String!
     password: string; // String!
   }
+  ResendEmailConfirmationInput: { // input type
+    email: string; // String!
+  }
   ResetPasswordInput: { // input type
     newPassword: string; // String!
     token: string; // String!
@@ -32,7 +35,7 @@ export interface NexusGenInputs {
     name: string; // String!
     password: string; // String!
   }
-  UpdateUserInput: { // input type
+  UpdateMyselfInput: { // input type
     email?: string | null; // String
     name?: string | null; // String
     password?: string | null; // String
@@ -92,12 +95,13 @@ export interface NexusGenFieldTypes {
     message: string; // String!
   }
   Mutation: { // field return type
-    activateUser: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
+    confirmEmail: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
     forgotPassword: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
     login: NexusGenRootTypes['AuthPayload'] | null; // AuthPayload
+    resendActivationEmail: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
     resetPassword: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
     signUp: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
-    updateUser: NexusGenRootTypes['User'] | null; // User
+    updateMyself: NexusGenRootTypes['User'] | null; // User
   }
   Query: { // field return type
     me: NexusGenRootTypes['User'] | null; // User
@@ -123,12 +127,13 @@ export interface NexusGenFieldTypeNames {
     message: 'String'
   }
   Mutation: { // field return type name
-    activateUser: 'MessagePayload'
+    confirmEmail: 'MessagePayload'
     forgotPassword: 'MessagePayload'
     login: 'AuthPayload'
+    resendActivationEmail: 'MessagePayload'
     resetPassword: 'MessagePayload'
     signUp: 'MessagePayload'
-    updateUser: 'User'
+    updateMyself: 'User'
   }
   Query: { // field return type name
     me: 'User'
@@ -147,7 +152,7 @@ export interface NexusGenFieldTypeNames {
 
 export interface NexusGenArgTypes {
   Mutation: {
-    activateUser: { // args
+    confirmEmail: { // args
       token: string; // String!
     }
     forgotPassword: { // args
@@ -156,14 +161,17 @@ export interface NexusGenArgTypes {
     login: { // args
       data: NexusGenInputs['LoginUserInput']; // LoginUserInput!
     }
+    resendActivationEmail: { // args
+      data: NexusGenInputs['ResendEmailConfirmationInput']; // ResendEmailConfirmationInput!
+    }
     resetPassword: { // args
       data: NexusGenInputs['ResetPasswordInput']; // ResetPasswordInput!
     }
     signUp: { // args
       data: NexusGenInputs['SignUpUserInput']; // SignUpUserInput!
     }
-    updateUser: { // args
-      data: NexusGenInputs['UpdateUserInput']; // UpdateUserInput!
+    updateMyself: { // args
+      data: NexusGenInputs['UpdateMyselfInput']; // UpdateMyselfInput!
     }
   }
 }

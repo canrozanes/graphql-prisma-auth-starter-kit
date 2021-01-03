@@ -8,9 +8,9 @@ export const signUpUser = gql`
   }
 `;
 
-export const activateUser = gql`
+export const confirmEmail = gql`
   mutation($token: String!) {
-    activateUser(token: $token) {
+    confirmEmail(token: $token) {
       message
     }
   }
@@ -53,9 +53,9 @@ export const me = gql`
   }
 `;
 
-export const updateUser = gql`
-  mutation($data: UpdateUserInput!) {
-    updateUser(data: $data) {
+export const updateMyself = gql`
+  mutation($data: UpdateMyselfInput!) {
+    updateMyself(data: $data) {
       name
       email
     }

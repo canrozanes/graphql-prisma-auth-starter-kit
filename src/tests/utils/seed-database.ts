@@ -37,6 +37,7 @@ export const seedDatabase = async (ctx: TestContext) => {
       name: userOne.input.name,
       email: userOne.input.email,
       password: bcrypt.hashSync(userOne.input.password),
+      isEmailConfirmed: true,
     },
   });
   userOne.authToken = await ctx.client
@@ -54,6 +55,7 @@ export const seedDatabase = async (ctx: TestContext) => {
       email: userTwoAdmin.input.email,
       password: bcrypt.hashSync(userTwoAdmin.input.password),
       role: "ADMIN",
+      isEmailConfirmed: true,
     },
   });
 

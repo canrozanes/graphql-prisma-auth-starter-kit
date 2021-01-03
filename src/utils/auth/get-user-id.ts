@@ -1,3 +1,4 @@
+import { AuthenticationError } from "apollo-server";
 import jwt from "jsonwebtoken";
 import { Context } from "../../context";
 
@@ -18,5 +19,5 @@ export const getUserId = (request: Context["request"]): number | undefined => {
 
     return decoded.userId;
   }
-  throw new Error("Authentication Required");
+  throw new AuthenticationError("Authentication Required");
 };
