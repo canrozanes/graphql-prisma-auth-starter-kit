@@ -27,6 +27,7 @@ module.exports = {
     "no-console": "off",
     "import/no-extraneous-dependencies": "off",
     "no-use-before-define": "off",
+    "arrow-body-style": "off",
   },
   settings: {
     "import/resolver": {

@@ -205,7 +205,13 @@ export const confirmEmail = mutationField("confirmEmail", {
   },
   async resolve(_root, args, { db }) {
     const { token } = args;
-    const { email } = verifyActivationToken(token);
+    let email = "";
+    try {
+      const userInfo = verifyActivationToken(token);
+      email = userInfo.email;
+    } catch (e) {
+      throw new AuthenticationError("Email confirmation link is invalid");
+    }
 
     await db.user.update({
       where: {

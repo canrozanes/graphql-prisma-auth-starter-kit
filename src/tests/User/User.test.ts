@@ -77,7 +77,33 @@ describe("User - Sign-up", () => {
       ctx.client.request(confirmEmail, {
         token: invalidToken,
       })
-    ).rejects.toThrow();
+    ).rejects.toThrow("Email confirmation link is invalid");
+  });
+  it("should throw an error if email is already taken", async () => {
+    const signUpVariables = {
+      data: {
+        name: "Candice",
+        email: userOne.input.email,
+        password: "abcd1234",
+      },
+    };
+
+    await expect(
+      ctx.client.request(signUpUser, signUpVariables)
+    ).rejects.toThrow("Email is already taken");
+  });
+  it("should throw an error if email is not a valid email", async () => {
+    const signUpVariables = {
+      data: {
+        name: "Candice",
+        email: "notaValidEmail.com",
+        password: "abcd1234",
+      },
+    };
+
+    await expect(
+      ctx.client.request(signUpUser, signUpVariables)
+    ).rejects.toThrow("Please enter a valid email");
   });
 });
 
