@@ -30,6 +30,8 @@ export const User = objectType({
     t.model.id();
     t.model.name();
     t.model.email();
+    t.model.isEmailConfirmed();
+    t.model.role();
     t.model.createdAt();
     t.model.updatedAt();
   },
@@ -80,8 +82,24 @@ export const UpdateUserInput = inputObjectType({
 
 export const getAllUsers = queryField("users", {
   type: nonNull(list(nonNull("User"))),
-  resolve(_root, _args, ctx) {
-    return ctx.db.user.findMany();
+  async resolve(_root, _args, { db, request }) {
+    const userId = getUserId(request);
+    const adminUser = await db.user.findFirst({
+      where: {
+        AND: [
+          {
+            role: "ADMIN",
+          },
+          {
+            id: userId,
+          },
+        ],
+      },
+    });
+    if (!adminUser) {
+      return [];
+    }
+    return db.user.findMany();
   },
 });
 
@@ -90,21 +108,25 @@ export const signUp = mutationField("signUp", {
   args: {
     data: arg({ type: nonNull(SignUpUserInput) }),
   },
-  async resolve(_root, args) {
+  async resolve(_root, args, { db }) {
     const { name, email, password } = args.data;
     const hashedPassword = await hashPassword(password);
 
-    const activationToken = generateActivationToken(
-      name,
-      email,
-      hashedPassword
-    );
+    const activationToken = generateActivationToken(email);
 
     const html = emailService.activationEmail(activationToken);
     await emailService.sendEmail(EMAIL_FROM, email, "Account activation", html);
 
+    await db.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
+    });
+
     return {
-      message: `Email has been sent to ${email}. Follow the instruction to activate your account`,
+      message: `Your account has been created! We've sent an email to ${email}. Please follow the instruction on the email to activate your account`,
     };
   },
 });
@@ -117,17 +139,18 @@ export const activateUser = mutationField("activateUser", {
   async resolve(_root, args, { db }) {
     const { token } = args;
 
-    const { name, email, password } = verifyActivationToken(token);
+    const { email } = verifyActivationToken(token);
 
-    await db.user.create({
-      data: {
-        name,
+    await db.user.update({
+      where: {
         email,
-        password,
+      },
+      data: {
+        isEmailConfirmed: true,
       },
     });
     return {
-      message: "Activation succeeded, please sign-in.",
+      message: "Activation succeeded, you can now sign-in.",
     };
   },
 });
@@ -217,8 +240,8 @@ export const login = mutationField("login", {
   args: {
     data: arg({ type: nonNull(LoginUserInput) }),
   },
-  async resolve(_root, args, ctx) {
-    const user = await ctx.db.user.findUnique({
+  async resolve(_root, args, { db }) {
+    const user = await db.user.findUnique({
       where: {
         email: args.data.email,
       },

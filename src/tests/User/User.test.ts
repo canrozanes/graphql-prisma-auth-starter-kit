@@ -1,6 +1,6 @@
 import { createTestContext } from "../utils/create-test-context";
 import { emailService } from "../../utils/email-service";
-import { userOne, seedDatabase } from "../utils/seed-database";
+import { userOne, userTwoAdmin, seedDatabase } from "../utils/seed-database";
 import {
   signUpUser,
   activateUser,
@@ -9,6 +9,7 @@ import {
   login,
   me,
   updateUser,
+  getAllUsers,
 } from "./operations";
 
 const ctx = createTestContext();
@@ -44,14 +45,14 @@ describe("User - Sign-up", () => {
     const emailVerificationToken = mockActivationEmail.mock.calls[0][0];
 
     expect(signUpResponse.signUp.message).toMatch(
-      /Follow the instruction to activate your account/
+      /Your account has been created/
     );
 
     const activateUserRes = await ctx.client.request(activateUser, {
       token: emailVerificationToken,
     });
     expect(activateUserRes.activateUser.message).toBe(
-      "Activation succeeded, please sign-in."
+      "Activation succeeded, you can now sign-in."
     );
 
     const user = await ctx.db.user.findUnique({
@@ -209,5 +210,34 @@ describe("User - updateUser", () => {
     );
 
     expect(updateUserResponse.updateUser.email).toBe(variables.data.email);
+  });
+});
+
+describe("User - getAllUsers", () => {
+  it("should return an empty array if user is not admin", async () => {
+    const requestHeaders = {
+      authorization: `Bearer ${userOne.authToken}`,
+    };
+
+    const updateUserRes = await ctx.client.request(
+      getAllUsers,
+      undefined,
+      requestHeaders
+    );
+
+    expect(updateUserRes.users.length).toBe(0);
+  });
+  it("should return all the users if user is admin", async () => {
+    const requestHeaders = {
+      authorization: `Bearer ${userTwoAdmin.authToken}`,
+    };
+
+    const updateUserRes = await ctx.client.request(
+      getAllUsers,
+      undefined,
+      requestHeaders
+    );
+
+    expect(updateUserRes.users.length).toBe(2);
   });
 });

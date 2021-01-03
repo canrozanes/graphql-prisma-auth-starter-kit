@@ -37,6 +37,11 @@ input ResetPasswordInput {
   token: String!
 }
 
+enum Role {
+  ADMIN
+  USER
+}
+
 input SignUpUserInput {
   email: String!
   name: String!
@@ -53,6 +58,8 @@ type User {
   createdAt: DateTime!
   email: String!
   id: Int!
+  isEmailConfirmed: Boolean!
   name: String!
+  role: Role!
   updatedAt: DateTime!
 }

@@ -61,3 +61,13 @@ export const updateUser = gql`
     }
   }
 `;
+
+export const getAllUsers = gql`
+  query {
+    users {
+      name
+      email
+      role
+    }
+  }
+`;

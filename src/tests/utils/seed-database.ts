@@ -19,7 +19,7 @@ export const userOne: SeededUser = {
   authToken: undefined,
 };
 
-export const userTwo: SeededUser = {
+export const userTwoAdmin: SeededUser = {
   input: {
     name: "John",
     email: "john@example.com",
@@ -48,19 +48,20 @@ export const seedDatabase = async (ctx: TestContext) => {
     })
     .then((res) => res.login.token);
 
-  userTwo.user = await ctx.db.user.create({
+  userTwoAdmin.user = await ctx.db.user.create({
     data: {
-      name: userTwo.input.name,
-      email: userTwo.input.email,
-      password: bcrypt.hashSync(userTwo.input.password),
+      name: userTwoAdmin.input.name,
+      email: userTwoAdmin.input.email,
+      password: bcrypt.hashSync(userTwoAdmin.input.password),
+      role: "ADMIN",
     },
   });
 
-  userTwo.authToken = await ctx.client
+  userTwoAdmin.authToken = await ctx.client
     .request(login, {
       data: {
-        email: userTwo.input.email,
-        password: userTwo.input.password,
+        email: userTwoAdmin.input.email,
+        password: userTwoAdmin.input.password,
       },
     })
     .then((res) => res.login.token);
