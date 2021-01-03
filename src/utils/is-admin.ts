@@ -1,3 +1,0 @@
-const isAdmin = (): boolean => {
-  return;
-};
