@@ -22,7 +22,7 @@ type Mutation {
   confirmEmail(token: String!): MessagePayload
   forgotPassword(email: String!): MessagePayload
   login(data: LoginUserInput!): AuthPayload
-  resendActivationEmail(data: ResendEmailConfirmationInput!): MessagePayload
+  resendConfirmationEmail(data: ResendEmailConfirmationInput!): MessagePayload
   resetPassword(data: ResetPasswordInput!): MessagePayload
   signUp(data: SignUpUserInput!): MessagePayload
   updateMyself(data: UpdateMyselfInput!): User

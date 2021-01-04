@@ -1,10 +1,5 @@
 import { Prisma, User as PrismaUserType } from "@prisma/client";
 import {
-  UserInputError,
-  AuthenticationError,
-  ForbiddenError,
-} from "apollo-server";
-import {
   objectType,
   stringArg,
   nonNull,
@@ -27,6 +22,12 @@ import {
   generateResetPasswordToken,
   verifyResetPasswordToken,
 } from "../utils/reset-password";
+import {
+  UserInputError,
+  AuthenticationError,
+  ForbiddenError,
+  NotFoundError,
+} from "../utils/errors";
 
 const EMAIL_FROM = process.env.EMAIL_FROM as string;
 
@@ -161,42 +162,47 @@ export const signUp = mutationField("signUp", {
   },
 });
 
-export const resendActivationEmail = mutationField("resendActivationEmail", {
-  type: MessagePayload,
-  args: {
-    data: arg({ type: nonNull(ResendEmailConfirmationInput) }),
-  },
-  async resolve(_root, args, { db }) {
-    const user = await db.user.findUnique({
-      where: {
-        email: args.data.email,
-      },
-    });
-    if (!user) {
-      return {
-        message: `There are no users associated with this email: ${args.data.email}.`,
-      };
-    }
-    if (user.isEmailConfirmed) {
-      return {
-        message: `This email: ${args.data.email} is already confirmed`,
-      };
-    }
+export const resendConfirmationEmail = mutationField(
+  "resendConfirmationEmail",
+  {
+    type: MessagePayload,
+    args: {
+      data: arg({ type: nonNull(ResendEmailConfirmationInput) }),
+    },
+    async resolve(_root, args, { db }) {
+      const user = await db.user.findUnique({
+        where: {
+          email: args.data.email,
+        },
+      });
 
-    const activationToken = generateActivationToken(args.data.email);
-    const html = emailService.activationEmail(activationToken);
-    await emailService.sendEmail(
-      EMAIL_FROM,
-      args.data.email,
-      "Account activation",
-      html
-    );
+      if (!user) {
+        throw new NotFoundError(
+          `There are no users associated with this email: ${args.data.email}.`
+        );
+      }
 
-    return {
-      message: `We've sent an email to ${args.data.email}. Please follow the instruction on the email to confirm your account`,
-    };
-  },
-});
+      if (user.isEmailConfirmed) {
+        throw new ForbiddenError(
+          `This email: ${args.data.email} is already confirmed`
+        );
+      }
+
+      const activationToken = generateActivationToken(args.data.email);
+      const html = emailService.activationEmail(activationToken);
+      await emailService.sendEmail(
+        EMAIL_FROM,
+        args.data.email,
+        "Account activation",
+        html
+      );
+
+      return {
+        message: `We've sent an email to ${args.data.email}. Please follow the instruction on the email to confirm your account.`,
+      };
+    },
+  }
+);
 
 export const confirmEmail = mutationField("confirmEmail", {
   type: MessagePayload,

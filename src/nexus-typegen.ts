@@ -98,7 +98,7 @@ export interface NexusGenFieldTypes {
     confirmEmail: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
     forgotPassword: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
     login: NexusGenRootTypes['AuthPayload'] | null; // AuthPayload
-    resendActivationEmail: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
+    resendConfirmationEmail: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
     resetPassword: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
     signUp: NexusGenRootTypes['MessagePayload'] | null; // MessagePayload
     updateMyself: NexusGenRootTypes['User'] | null; // User
@@ -130,7 +130,7 @@ export interface NexusGenFieldTypeNames {
     confirmEmail: 'MessagePayload'
     forgotPassword: 'MessagePayload'
     login: 'AuthPayload'
-    resendActivationEmail: 'MessagePayload'
+    resendConfirmationEmail: 'MessagePayload'
     resetPassword: 'MessagePayload'
     signUp: 'MessagePayload'
     updateMyself: 'User'
@@ -161,7 +161,7 @@ export interface NexusGenArgTypes {
     login: { // args
       data: NexusGenInputs['LoginUserInput']; // LoginUserInput!
     }
-    resendActivationEmail: { // args
+    resendConfirmationEmail: { // args
       data: NexusGenInputs['ResendEmailConfirmationInput']; // ResendEmailConfirmationInput!
     }
     resetPassword: { // args

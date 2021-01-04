@@ -71,3 +71,11 @@ export const getAllUsers = gql`
     }
   }
 `;
+
+export const resendConfirmationEmail = gql`
+  mutation($data: ResendEmailConfirmationInput!) {
+    resendConfirmationEmail(data: $data) {
+      message
+    }
+  }
+`;

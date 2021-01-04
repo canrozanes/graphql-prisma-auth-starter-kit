@@ -1,6 +1,11 @@
 import { createTestContext } from "../utils/create-test-context";
 import { emailService } from "../../utils/email-service";
-import { userOne, userTwoAdmin, seedDatabase } from "../utils/seed-database";
+import {
+  userOne,
+  userTwoAdmin,
+  userThree,
+  seedDatabase,
+} from "../utils/seed-database";
 import {
   signUpUser,
   confirmEmail,
@@ -10,6 +15,7 @@ import {
   me,
   updateMyself,
   getAllUsers,
+  resendConfirmationEmail,
 } from "./operations";
 
 const ctx = createTestContext();
@@ -133,7 +139,9 @@ describe("User - Login", () => {
         password: "1234abcd",
       },
     };
-    await expect(ctx.client.request(login, variables)).rejects.toThrow();
+    await expect(ctx.client.request(login, variables)).rejects.toThrow(
+      "Email or password does not match"
+    );
   });
   it("should throw an error if email and password don't match", async () => {
     const variables = {
@@ -142,7 +150,20 @@ describe("User - Login", () => {
         password: "1234abcd",
       },
     };
-    await expect(ctx.client.request(login, variables)).rejects.toThrow();
+    await expect(ctx.client.request(login, variables)).rejects.toThrow(
+      "Email or password does not match"
+    );
+  });
+  it("should throw an error if user's email is not confirmed", async () => {
+    const variables = {
+      data: {
+        email: userThree.input.email,
+        password: userThree.input.password,
+      },
+    };
+    await expect(ctx.client.request(login, variables)).rejects.toThrow(
+      "You need to confirm your email before your first login"
+    );
   });
 });
 
@@ -219,7 +240,7 @@ describe("User - Password Reset", () => {
 });
 
 describe("User - updateMyself", () => {
-  it("should properly update users", async () => {
+  it("should properly update user email", async () => {
     const requestHeaders = {
       authorization: `Bearer ${userOne.authToken}`,
     };
@@ -236,6 +257,62 @@ describe("User - updateMyself", () => {
     );
 
     expect(updateMyselfResponse.updateMyself.email).toBe(variables.data.email);
+  });
+  it("should properly update user name", async () => {
+    const requestHeaders = {
+      authorization: `Bearer ${userOne.authToken}`,
+    };
+    const variables = {
+      data: {
+        name: "Boris",
+      },
+    };
+
+    const updateMyselfResponse = await ctx.client.request(
+      updateMyself,
+      variables,
+      requestHeaders
+    );
+
+    expect(updateMyselfResponse.updateMyself.name).toBe(variables.data.name);
+  });
+  it("should properly update user password", async () => {
+    const requestHeaders = {
+      authorization: `Bearer ${userOne.authToken}`,
+    };
+    const updateVariables = {
+      data: {
+        name: "Boris",
+        password: "newPassword1234",
+      },
+    };
+
+    await ctx.client.request(updateMyself, updateVariables, requestHeaders);
+
+    const loginVariables = {
+      data: {
+        email: userOne.input.email,
+        password: updateVariables.data.password,
+      },
+    };
+
+    const loginRes = await ctx.client.request(login, loginVariables);
+    expect(loginRes.login.token).toBeTruthy();
+  });
+
+  it("should throw an error if the email is not valid", async () => {
+    const requestHeaders = {
+      authorization: `Bearer ${userOne.authToken}`,
+    };
+    const variables = {
+      data: {
+        email: "bademail.com",
+      },
+    };
+
+    await expect(
+      ctx.client.request(updateMyself, variables, requestHeaders)
+    ).rejects.toThrow("Please enter a valid email");
   });
 });
 
@@ -264,6 +341,46 @@ describe("User - getAllUsers", () => {
       requestHeaders
     );
 
-    expect(updateMyselfRes.users.length).toBe(2);
+    expect(updateMyselfRes.users.length).toBe(3);
+  });
+});
+
+describe("User - resendConfirmationEmail", () => {
+  it("throws an error when the email is not associated with any user", async () => {
+    const variables = {
+      data: {
+        email: "hehehe@hehehe.com",
+      },
+    };
+    await expect(
+      ctx.client.request(resendConfirmationEmail, variables)
+    ).rejects.toThrow("There are no users associated with this email");
+  });
+  it("throws an error if the user email is already confirmed", async () => {
+    const variables = {
+      data: {
+        email: userOne.input.email,
+      },
+    };
+    await expect(
+      ctx.client.request(resendConfirmationEmail, variables)
+    ).rejects.toThrow(
+      `This email: ${variables.data.email} is already confirmed`
+    );
+  });
+  it("sends a confirmation email if the email is valid and it has not been confirmed", async () => {
+    const variables = {
+      data: {
+        email: userThree.input.email,
+      },
+    };
+    const resendEmailRes = await ctx.client.request(
+      resendConfirmationEmail,
+      variables
+    );
+    expect(resendEmailRes.resendConfirmationEmail.message).toMatch(
+      /Please follow the instruction on the email to confirm your account/
+    );
+    expect(mockResetPasswordEmail).not.toHaveBeenCalled();
   });
 });

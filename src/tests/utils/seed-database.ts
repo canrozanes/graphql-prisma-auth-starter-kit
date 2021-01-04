@@ -29,6 +29,16 @@ export const userTwoAdmin: SeededUser = {
   authToken: undefined,
 };
 
+export const userThree: SeededUser = {
+  input: {
+    name: "James",
+    email: "james@example.com",
+    password: "abcd1234",
+  },
+  user: undefined,
+  authToken: undefined,
+};
+
 export const seedDatabase = async (ctx: TestContext) => {
   await ctx.db.user.deleteMany();
 
@@ -67,4 +77,13 @@ export const seedDatabase = async (ctx: TestContext) => {
       },
     })
     .then((res) => res.login.token);
+
+  userThree.user = await ctx.db.user.create({
+    data: {
+      name: userThree.input.name,
+      email: userThree.input.email,
+      password: bcrypt.hashSync(userThree.input.password),
+      isEmailConfirmed: false,
+    },
+  });
 };
