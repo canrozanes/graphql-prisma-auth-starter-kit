@@ -17,20 +17,22 @@ export function createTestContext(): TestContext {
   const ctx = {} as TestContext;
   const graphqlCtx = graphqlTestContext();
   const prismaCtx = prismaTestContext();
-  beforeEach(async () => {
+
+  beforeAll(async () => {
     const client = await graphqlCtx.before();
-    const newDb = await prismaCtx.before();
+    const testDb = await prismaCtx.before();
     Object.assign(ctx, {
       client,
-      db: newDb,
+      db: testDb,
     });
   });
-  afterEach(async () => {
+  afterAll(async () => {
     await graphqlCtx.after();
     await prismaCtx.after();
   });
   return ctx;
 }
+
 function graphqlTestContext() {
   let serverInstance: ServerInfo | null = null;
   return {
@@ -78,6 +80,7 @@ function prismaTestContext() {
       });
       // Construct a new Prisma Client connected to the generated Postgres schema
       prismaClient = new PrismaClient();
+      console.log("created", schema);
       return prismaClient;
     },
     async after() {

@@ -1,121 +1,35 @@
 import { Prisma, User as PrismaUserType } from "@prisma/client";
-import {
-  objectType,
-  stringArg,
-  nonNull,
-  arg,
-  inputObjectType,
-  queryField,
-  list,
-  mutationField,
-} from "nexus";
 import bcrypt from "bcryptjs";
+import {
+  UserInputError,
+  ForbiddenError,
+  AuthenticationError,
+} from "apollo-server";
+import { mutationField, arg, nonNull, stringArg } from "nexus";
 import isEmail from "validator/lib/isEmail";
-import { generateAuthToken, getUserId } from "../utils/auth";
-import hashPassword from "../utils/hash-password";
 import {
   generateActivationToken,
   verifyActivationToken,
-} from "../utils/activation";
-import { emailService } from "../utils/email-service";
+} from "../../utils/activation";
+import { generateAuthToken, getUserId } from "../../utils/auth";
+import { emailService } from "../../utils/email-service";
+import { NotFoundError } from "../../utils/errors";
+import hashPassword from "../../utils/hash-password";
 import {
   generateResetPasswordToken,
   verifyResetPasswordToken,
-} from "../utils/reset-password";
+} from "../../utils/reset-password";
 import {
-  UserInputError,
-  AuthenticationError,
-  ForbiddenError,
-  NotFoundError,
-} from "../utils/errors";
+  MessagePayload,
+  SignUpUserInput,
+  ResendEmailConfirmationInput,
+  ResetPasswordInput,
+  LoginUserInput,
+  User,
+  UpdateMyselfInput,
+} from "./Object-types";
 
 const EMAIL_FROM = process.env.EMAIL_FROM as string;
-
-export const User = objectType({
-  name: "User",
-  definition(t) {
-    t.model.id();
-    t.model.name();
-    t.model.email();
-    t.model.isEmailConfirmed();
-    t.model.role();
-    t.model.createdAt();
-    t.model.updatedAt();
-  },
-});
-
-export const AuthPayload = objectType({
-  name: "AuthPayload",
-  definition(t) {
-    t.nonNull.field("user", {
-      type: "User",
-    });
-    t.nonNull.string("token");
-  },
-});
-
-export const MessagePayload = objectType({
-  name: "MessagePayload",
-  definition(t) {
-    t.nonNull.string("message");
-  },
-});
-
-export const SignUpUserInput = inputObjectType({
-  name: "SignUpUserInput",
-  definition(t) {
-    t.nonNull.string("name");
-    t.nonNull.string("email");
-    t.nonNull.string("password");
-  },
-});
-
-export const LoginUserInput = inputObjectType({
-  name: "LoginUserInput",
-  definition(t) {
-    t.nonNull.string("email");
-    t.nonNull.string("password");
-  },
-});
-
-export const UpdateMyselfInput = inputObjectType({
-  name: "UpdateMyselfInput",
-  definition(t) {
-    t.string("name");
-    t.string("email");
-    t.string("password");
-  },
-});
-
-export const ResendEmailConfirmationInput = inputObjectType({
-  name: "ResendEmailConfirmationInput",
-  definition(t) {
-    t.nonNull.string("email");
-  },
-});
-
-export const getAllUsers = queryField("users", {
-  type: nonNull(list(nonNull("User"))),
-  async resolve(_root, _args, { db, request }) {
-    const userId = getUserId(request);
-    const adminUser = await db.user.findFirst({
-      where: {
-        AND: [
-          {
-            role: "ADMIN",
-          },
-          {
-            id: userId,
-          },
-        ],
-      },
-    });
-    if (!adminUser) {
-      return [];
-    }
-    return db.user.findMany();
-  },
-});
 
 export const signUp = mutationField("signUp", {
   type: MessagePayload,
@@ -275,14 +189,6 @@ export const forgotPassword = mutationField("forgotPassword", {
   },
 });
 
-const ResetPasswordInput = inputObjectType({
-  name: "ResetPasswordInput",
-  definition(t) {
-    t.nonNull.string("token");
-    t.nonNull.string("newPassword");
-  },
-});
-
 export const ResetPassword = mutationField("resetPassword", {
   type: "MessagePayload",
   args: {
@@ -343,14 +249,6 @@ export const login = mutationField("login", {
       user,
       token: generateAuthToken(user.id),
     };
-  },
-});
-
-export const getMe = queryField("me", {
-  type: "User",
-  resolve(_root, _args, { request, db }) {
-    const userId = getUserId(request);
-    return db.user.findUnique({ where: { id: userId } });
   },
 });
 
